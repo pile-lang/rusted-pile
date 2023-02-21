@@ -1,0 +1,14 @@
+<a> -> a 
+    | a <a> 
+    | ε
+    ;
+
+<anything-but-a> -> b 
+                 | b <anything-but-a> 
+                 | ε
+                 ;
+
+<anything-but-a-or-b> -> c 
+                      | c <anything-but-a-or-b> 
+                      | ε
+                      ;
