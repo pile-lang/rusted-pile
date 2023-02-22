@@ -8,15 +8,15 @@ use std::{
 
 use crate::grammar::{production::Production, Grammar, Symbol};
 
-type Rhs = Vec<Symbol>;
-type Lhs = Symbol;
+pub type Rhs = Vec<Symbol>;
+pub type Lhs = Symbol;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClosureItem {
-  id: usize,
-  kernel: Vec<Production>,
-  productions: Vec<Production>,
-  transitions: HashMap<Symbol, usize>,
+  pub id: usize,
+  pub kernel: Vec<Production>,
+  pub productions: Vec<Production>,
+  pub transitions: HashMap<Symbol, usize>,
 }
 
 impl PartialOrd for ClosureItem {

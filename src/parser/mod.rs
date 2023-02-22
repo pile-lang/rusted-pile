@@ -7,4 +7,5 @@ pub enum Action {
   Shift(usize),  // shift to the state with the given index
   Reduce(usize), // reduce using the production with the given index
   Accept,        // accept the input
+  Error,         // error
 }

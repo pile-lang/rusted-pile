@@ -2,8 +2,8 @@ use super::Symbol;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Production {
-  lhs: Symbol,
-  rhs: Vec<Symbol>,
+  pub lhs: Symbol,
+  pub rhs: Vec<Symbol>,
 }
 
 impl Production {
@@ -63,6 +63,17 @@ impl Production {
     }
 
     None
+  }
+
+  pub fn copy_without_dot(&self) -> Self {
+    let (lhs, rhs) = self.clone().into();
+    let new_rhs = rhs
+      .iter()
+      .filter(|symbol| symbol != &&Symbol::Dot)
+      .cloned()
+      .collect();
+
+    Production::new(lhs, new_rhs)
   }
 }
 

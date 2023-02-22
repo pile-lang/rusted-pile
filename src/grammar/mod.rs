@@ -120,6 +120,8 @@ impl Grammar {
       }
     }
 
+    terminals.insert(Symbol::End);
+
     terminals
   }
 

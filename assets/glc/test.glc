@@ -3,5 +3,5 @@
     ;
 
 <F> -> id
-    | group <T> group
+    | open-group <T> close-group
     ;

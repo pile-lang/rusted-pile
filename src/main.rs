@@ -8,10 +8,11 @@ fn main() -> MietteResult<(), Box<dyn std::error::Error>> {
 
   let glc_contents = fs::read_to_string("assets/glc/test.glc")?;
   let mut glc = grammar::parser::parse(&glc_contents)?;
+
   glc.compute_follow_set().expand();
   println!("{glc}");
 
-  // SLR::new(glc);
+  SLR::new(glc);
 
   Ok(())
 }
