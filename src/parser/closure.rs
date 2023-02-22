@@ -130,10 +130,7 @@ impl ClosureItem {
     self
   }
 
-  pub fn populate(
-    &mut self,
-    grammar: &Grammar,
-  ) -> HashMap<Vec<Production>, Rc<RefCell<ClosureItem>>> {
+  pub fn populate(&mut self, grammar: &Grammar) -> HashMap<Vec<Production>, ClosureItem> {
     let mut closure_set: HashMap<Vec<Production>, Rc<RefCell<ClosureItem>>> = HashMap::new();
 
     // First add the first closure set
@@ -196,7 +193,13 @@ impl ClosureItem {
       }
     }
 
-    closure_set
+    // TODO: Refactor this later
+    let mut closure_set_ret: HashMap<Vec<Production>, ClosureItem> = HashMap::new();
+    closure_set.iter().for_each(|(key, value)| {
+      closure_set_ret.insert(key.clone(), value.borrow().clone());
+    });
+
+    closure_set_ret
   }
 
   /// Find the goto productions for a given symbol

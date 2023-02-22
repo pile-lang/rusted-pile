@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::grammar::{production::Production, Grammar, Symbol};
 
@@ -9,7 +9,7 @@ pub struct SLR {
   grammar: Grammar,
   action_table: HashMap<(usize, Symbol), Action>,
   goto_table: HashMap<(usize, Symbol), usize>,
-  closure_set: HashMap<Vec<Production>, Rc<RefCell<ClosureItem>>>,
+  closure_set: HashMap<Vec<Production>, ClosureItem>,
 }
 
 impl SLR {
@@ -39,7 +39,7 @@ impl SLR {
 
     // print closure items
     closure_items.iter().for_each(|closure_item| {
-      println!("{}", closure_item.borrow());
+      println!("{}", closure_item);
     });
 
     slr.build_tables();
