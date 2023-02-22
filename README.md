@@ -1,5 +1,14 @@
 # <h1 align="center"> Rusted Pile Compiler </h1>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Daniel-Boll/rusted-pile/main/assets/images/pile_logo.png" width=300>
+</p>
+
+<p align="center" >
+  <i>Midjourney generated logo</i>
+</p>
+
+
 Rusted Pile is a stack-based programming language compiler written in Rust. 
 It is designed to allow for efficient and concise programming using stack-based operations.
 
@@ -24,14 +33,14 @@ This will compile the my_program.rp file and output the resulting executable fil
 
 Rusted Pile includes a number of stack-based operations, including:
 
-`push`: pushes a value onto the stack
-`pop`: removes the top value from the stack
-`dup`: duplicates the top value on the stack
-`swap`: swaps the top two values on the stack
-`add`: adds the top two values on the stack
-`sub`: subtracts the top two values on the stack
-`mul`: multiplies the top two values on the stack
-`div`: divides the top two values on the stack
+- `push`: pushes a value onto the stack
+- `pop`: removes the top value from the stack
+- `dup`: duplicates the top value on the stack
+- `swap`: swaps the top two values on the stack
+- `add`: adds the top two values on the stack
+- `sub`: subtracts the top two values on the stack
+- `mul`: multiplies the top two values on the stack
+- `div`: divides the top two values on the stack
 
 ## Contributing
 If you are interested in contributing to Rusted Pile, please feel free to submit a pull request with your changes. We are always looking for new contributors to help improve the language and the compiler.
