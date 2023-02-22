@@ -30,7 +30,7 @@ impl Symbol {
       Symbol::Terminal(s) => s.clone(),
       Symbol::NonTerminal(s) => s.clone(),
       Symbol::Empty => "ε".to_string(),
-      Symbol::Dot => todo!(),
+      Symbol::Dot => ".".to_string(),
     }
   }
 }
@@ -41,7 +41,7 @@ impl Display for Symbol {
       Symbol::Terminal(s) => write!(f, "{}", s),
       Symbol::NonTerminal(s) => write!(f, "<{}>", s),
       Symbol::Empty => write!(f, "ε"),
-      Symbol::Dot => todo!(),
+      Symbol::Dot => write!(f, "."),
     }
   }
 }
@@ -58,7 +58,7 @@ impl Display for Grammar {
 
       for (i, symbol) in rhs.iter().enumerate() {
         if i != 0 {
-          write!(f, " | ")?;
+          write!(f, " ")?;
         }
 
         write!(f, "{}", symbol)?;
@@ -68,5 +68,26 @@ impl Display for Grammar {
     }
 
     Ok(())
+  }
+}
+
+impl Grammar {
+  pub fn get_production(&self, lhs: &Symbol) -> Option<Vec<(Symbol, Vec<Symbol>)>> {
+    let mut productions = Vec::new();
+
+    for (l, r) in &self.productions {
+      if l == lhs {
+        productions.push((l.clone(), r.clone()));
+      }
+    }
+
+    match productions.is_empty() {
+      true => None,
+      false => Some(productions),
+    }
+  }
+
+  pub fn start_symbol(&self) -> Symbol {
+    self.productions[0].0.clone()
   }
 }

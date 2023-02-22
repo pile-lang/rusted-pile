@@ -1,14 +1,7 @@
-<a> -> a 
-    | a <a> 
-    | ε
+<T> -> <F>
+    | <T> arithmetic-op <F>
     ;
 
-<anything-but-a> -> b 
-                 | b <anything-but-a> 
-                 | ε
-                 ;
-
-<anything-but-a-or-b> -> c 
-                      | c <anything-but-a-or-b> 
-                      | ε
-                      ;
+<F> -> id
+    | group <T> group
+    ;

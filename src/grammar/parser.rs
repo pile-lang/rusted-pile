@@ -16,11 +16,10 @@ impl TryFrom<&mut Lexer<'_, GLCTokens>> for Grammar {
     let mut current_rhs: Vec<Symbol> = Vec::new();
 
     while let (Some(token), slice, span) = (value.next(), value.slice(), value.span()) {
-      dbg!(token);
       match token {
         GLCTokens::NonTerminal => {
           if current_lhs.is_some() {
-            current_rhs.push(current_lhs.clone().unwrap());
+            current_rhs.push(Symbol::NonTerminal(remove_angle_brackets(slice)));
             continue;
           }
 
