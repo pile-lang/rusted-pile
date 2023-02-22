@@ -3,6 +3,7 @@ use std::fmt::Display;
 pub mod expand;
 pub mod parser;
 pub mod tokens;
+pub mod production;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Symbol {

@@ -15,7 +15,7 @@ impl TryFrom<&mut Lexer<'_, GLCTokens>> for Grammar {
     let mut current_lhs: Option<Symbol> = None;
     let mut current_rhs: Vec<Symbol> = Vec::new();
 
-    while let (Some(token), slice, span) = (value.next(), value.slice(), value.span()) {
+    while let (Some(token), slice, _span) = (value.next(), value.slice(), value.span()) {
       match token {
         GLCTokens::NonTerminal => {
           if current_lhs.is_some() {
