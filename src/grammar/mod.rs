@@ -108,4 +108,30 @@ impl Grammar {
   pub fn start_symbol(&self) -> Symbol {
     self.productions[0].0.clone()
   }
+
+  pub fn terminals(&self) -> HashSet<Symbol> {
+    let mut terminals = HashSet::new();
+
+    for (_, rhs) in &self.productions {
+      for symbol in rhs {
+        if symbol.is_terminal() {
+          terminals.insert(symbol.clone());
+        }
+      }
+    }
+
+    terminals
+  }
+
+  pub fn non_terminals(&self) -> HashSet<Symbol> {
+    let mut non_terminals = HashSet::new();
+
+    for (lhs, _) in &self.productions {
+      if lhs.is_non_terminal() {
+        non_terminals.insert(lhs.clone());
+      }
+    }
+
+    non_terminals
+  }
 }
