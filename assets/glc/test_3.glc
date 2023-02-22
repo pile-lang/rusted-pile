@@ -1,0 +1,13 @@
+<E> -> <T> <E-prime>;
+<E-prime> -> v-op <T> <E-prime>
+          | ε
+          ;
+
+<T> -> <F> <T-prime>;
+<T-prime> -> v-not-op <F> <T-prime>
+          | ε
+          ;
+
+<F> -> not <F>
+    | id
+    ;

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use logos::{Lexer, Logos};
 
 use super::{tokens::GLCTokens, Grammar, Symbol};
@@ -71,7 +73,11 @@ impl TryFrom<&mut Lexer<'_, GLCTokens>> for Grammar {
       productions.push((current_non_terminal, current_rhs));
     }
 
-    Ok(Self { productions })
+    Ok(Self {
+      productions,
+      first_set: HashMap::new(),
+      follow_set: HashMap::new(),
+    })
   }
 }
 

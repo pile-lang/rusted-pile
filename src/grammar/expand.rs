@@ -12,7 +12,7 @@ impl Grammar {
   /// S' -> S
   /// S -> A | B
   /// ```
-  pub fn expand(&mut self) {
+  pub fn expand(&mut self) -> &mut Self {
     let start_symbol = self.productions[0].0.clone();
     let new_start_symbol = Symbol::NonTerminal(format!(
       "{}'",
@@ -21,5 +21,7 @@ impl Grammar {
     self
       .productions
       .insert(0, (new_start_symbol, vec![start_symbol]));
+
+    self
   }
 }

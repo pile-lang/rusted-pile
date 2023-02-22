@@ -1,0 +1,7 @@
+<S> -> a
+    | group-open <L> group-close
+    ;
+
+<L> -> <L> sep <S>
+    | <S>
+    ;

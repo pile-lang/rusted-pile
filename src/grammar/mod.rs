@@ -1,9 +1,13 @@
-use std::fmt::Display;
+use std::{
+  collections::{HashMap, HashSet},
+  fmt::Display,
+};
 
 pub mod expand;
+pub mod follow;
 pub mod parser;
-pub mod tokens;
 pub mod production;
+pub mod tokens;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Symbol {
@@ -11,6 +15,7 @@ pub enum Symbol {
   NonTerminal(String),
   Empty,
   Dot,
+  End,
 }
 
 impl Symbol {
@@ -26,12 +31,21 @@ impl Symbol {
     matches!(self, Symbol::Empty)
   }
 
+  pub fn is_dot(&self) -> bool {
+    matches!(self, Symbol::Dot)
+  }
+
+  pub fn is_end(&self) -> bool {
+    matches!(self, Symbol::End)
+  }
+
   pub fn get_name(&self) -> String {
     match self {
       Symbol::Terminal(s) => s.clone(),
       Symbol::NonTerminal(s) => s.clone(),
       Symbol::Empty => "ε".to_string(),
       Symbol::Dot => ".".to_string(),
+      Symbol::End => "$".to_string(),
     }
   }
 }
@@ -43,6 +57,7 @@ impl Display for Symbol {
       Symbol::NonTerminal(s) => write!(f, "<{}>", s),
       Symbol::Empty => write!(f, "ε"),
       Symbol::Dot => write!(f, "."),
+      Symbol::End => write!(f, "$"),
     }
   }
 }
@@ -50,6 +65,8 @@ impl Display for Symbol {
 #[derive(Debug, Clone)]
 pub struct Grammar {
   pub productions: Vec<(Symbol, Vec<Symbol>)>,
+  pub follow_set: HashMap<Symbol, HashSet<Symbol>>,
+  pub first_set: HashMap<Symbol, HashSet<Symbol>>,
 }
 
 impl Display for Grammar {
