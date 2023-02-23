@@ -31,7 +31,7 @@ impl SLR {
 
     slr.build_tables();
 
-    slr.display_actions_table();
+    // slr.display_actions_table();
 
     slr
   }

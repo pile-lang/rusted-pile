@@ -31,7 +31,7 @@ pub fn compute_tokens(input: &str) -> MietteResult<Vec<PileToken>> {
   }
 
   tokens.push(PileToken {
-    token: Token::End,
+    token: Token::EndOfInput,
     span: lex.span(),
     slice: "$".into(),
   });

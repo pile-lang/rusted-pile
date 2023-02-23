@@ -38,13 +38,41 @@ pub enum Token {
   #[regex(r"\+|-|\*|/|%")]
   ArithmeticOp,
 
+  /// Comparison operators
+  #[regex(r"=|<>|<=|>=|<|>")]
+  ComparisonOp,
+
   /// Cast (::)
   #[regex(r"::")]
   CastOp,
 
   /// Keywords
-  #[regex("drop|dup")]
-  Keyword,
+
+  /// Stack Ops
+  #[regex(r"drop|dup")]
+  StackOps,
+
+  // @ sign
+  #[token("@")]
+  AtSign,
+
+  #[token("while")]
+  While,
+
+  #[token("do")]
+  Do,
+
+  #[token("end")]
+  End,
+
+  #[token("if")]
+  If,
+
+  #[token("else")]
+  Else,
+
+  #[token("range")]
+  Range,
 
   /// Types
   #[regex("i32|i64|f32|f64")]
@@ -60,7 +88,7 @@ pub enum Token {
 
   /// End of input
   #[regex(r"\$")]
-  End,
+  EndOfInput,
 }
 
 impl Display for Token {

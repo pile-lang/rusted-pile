@@ -1,15 +1,43 @@
 <program> -> <statement>;
 
 <statement> -> ArithmeticOp
+            | ComparisonOp
+            | Identifier
             | <numeric>
             | <cast>
             | <var-declaration>
+            | <if-statement>
+            | <else-statement>
+            | <stack-ops>
+            | <assign-to-identifier>
+            | <while-statement>
+            | <range-statement>
             | <statement> <statement>
             ;
-
-<cast> -> CastOp Types;
-<var-declaration> -> DefType Identifier;
 
 <numeric> -> Integer
           | Float
           ;
+
+<cast> -> CastOp Types;
+<var-declaration> -> DefType Identifier;
+<assign-to-identifier> -> AtSign Identifier;
+
+<stack-ops> -> StackOps;
+
+<if-statement> -> If <statement> End;
+<else-statement> -> If <statement> Else <statement> End;
+
+<while-logic-prime> -> ComparisonOp
+              | <numeric>
+              | <stack-ops>
+              ;
+<while-logic> -> <while-logic-prime> <while-logic>
+               | <while-logic-prime>
+               ;
+<while-statement> -> While <while-logic> Do <statement> End;
+
+<optional-id> -> Identifier
+              | ε
+              ;
+<range-statement> -> Range <optional-id> Do <statement> End;

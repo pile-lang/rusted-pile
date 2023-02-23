@@ -1,15 +1,16 @@
+use miette::Result as MietteResult;
 use std::collections::VecDeque;
 
 use crate::{
   grammar::Symbol,
-  lexer::{tokens::Token, PileToken},
-  parser::Action,
+  lexer::{tokens::{Token, span_to_tuple}, PileToken},
+  parser::{errors::ParseError, Action},
 };
 
 use super::SLR::SLR;
 
 impl SLR {
-  pub fn parse(&self, tokens: Vec<PileToken>) -> Result<(), String> {
+  pub fn parse(&self, tokens: Vec<PileToken>, source_code: &str) -> MietteResult<()> {
     // A type to store either a usize or a Symbol
     #[derive(Debug, Clone)]
     enum StackItem {
@@ -30,35 +31,40 @@ impl SLR {
 
       if let StackItem::State(state) = top {
         if next.is_none() {
-          return Err("No more tokens to parse".to_string());
+          // TODO: No more tokens to parse error
+          // return Err("No more tokens to parse".to_string());
         }
-        let current_token = next.clone().unwrap().token;
+        let PileToken {
+          token: current_token,
+          slice,
+          span,
+        } = next.clone().expect("No more tokens to parse");
 
-        let symbol = if let Token::End = current_token {
+        let symbol = if let Token::EndOfInput = current_token {
           Symbol::End
         } else {
           Symbol::Terminal(current_token.get_token_type_only())
         };
 
         // print the queue
-        print!("Stack: ");
-        for item in stack.iter() {
-          match item {
-            StackItem::State(state) => print!("{} ", state),
-            StackItem::Symbol(symbol) => print!("{} ", symbol),
-          }
-        }
-        println!();
+        // print!("Stack: ");
+        // for item in stack.iter() {
+        //   match item {
+        //     StackItem::State(state) => print!("{} ", state),
+        //     StackItem::Symbol(symbol) => print!("{} ", symbol),
+        //   }
+        // }
+        // println!();
 
         let action = self
           .action_table
           .get(&(*state, symbol.clone()))
           .unwrap_or_else(|| panic!("No action for state {} and symbol {:?}", state, symbol));
 
-        println!(
-          "State: {}, Token: {}, Action: {:?}",
-          state, current_token, action
-        );
+        // println!(
+        //   "State: {}, Token: {}, Action: {:?}",
+        //   state, current_token, action
+        // );
 
         match action {
           Action::Shift(shift_state) => {
@@ -82,7 +88,9 @@ impl SLR {
             let top = if let StackItem::State(state) = stack.back().unwrap() {
               state
             } else {
-              return Err("Stack top is not a state".to_string());
+              &(0_usize)
+              // TODO: Stack top is not a state error
+              // return Err("Stack top is not a state".to_string());
             };
 
             let state = self
@@ -98,17 +106,43 @@ impl SLR {
             break;
           }
           Action::Error => {
-            return Err(format!(
-              "Error at state {} with token {}",
-              state, current_token
-            ));
+            let expected_tokens = self.find_expected_symbol(*state);
+
+            return Err(ParseError::UnexpectedToken {
+              input: source_code.to_string(),
+              extension_src: span_to_tuple(span),
+              advice: format!(
+                "Expected one of the following tokens: {:?} but got {:?}",
+                expected_tokens, current_token
+              ),
+            })?;
           }
         }
       } else {
-        return Err("Stack top is not a state".to_string());
+        // TODO: Stack top is not a state error
+        // return Err("Stack top is not a state".to_string());
       }
     }
 
     Ok(())
+  }
+
+  pub fn find_expected_symbol(&self, state: usize) -> Vec<String> {
+    let mut expected_tokens = Vec::new();
+    for ((current_state, current_symbol), value) in self.action_table.iter() {
+      if *current_state == state {
+        match value {
+          Action::Shift(_) => {
+            expected_tokens.push(current_symbol.to_string());
+          }
+          Action::Reduce(_) => {
+            expected_tokens.push(current_symbol.to_string());
+          }
+          Action::Error => {}
+          Action::Accept => {}
+        }
+      }
+    }
+    expected_tokens
   }
 }
