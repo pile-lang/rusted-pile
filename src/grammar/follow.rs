@@ -41,12 +41,16 @@ impl Grammar {
         if next_symbol.is_none() {
           // Add the follow set of the production to the follow set of the next_symbol
           let binding = self.follow_set.clone();
-          let production_follow_set = binding.get(lhs).unwrap();
+          let production_follow_set = binding.get(lhs);
+          if production_follow_set.is_none() {
+            continue;
+          }
+
           self
             .follow_set
             .entry(symbol.clone())
             .or_insert(HashSet::new())
-            .extend(production_follow_set.clone());
+            .extend(production_follow_set.unwrap().clone());
 
           continue;
         }
@@ -129,7 +133,7 @@ impl Grammar {
             // If the first set of the production that produces the symbol is not computed yet, then
             // compute it
             if !self.first_set.contains_key(symbol) {
-              self.first_set_for_symbol(symbol.clone());
+              self.first_set_for_symbol(lhs.clone());
             }
 
             let binding = self.first_set.clone();

@@ -1,6 +1,8 @@
 #[allow(non_snake_case)]
 pub mod SLR;
 pub mod closure;
+pub mod parsing_table;
+pub mod parse;
 
 #[derive(Debug, Clone)]
 pub enum Action {

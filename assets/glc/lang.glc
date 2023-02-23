@@ -1,0 +1,15 @@
+<program> -> <statement>;
+
+<statement> -> ArithmeticOp
+            | <numeric>
+            | <cast>
+            | <var-declaration>
+            | <statement> <statement>
+            ;
+
+<cast> -> CastOp Types;
+<var-declaration> -> DefType Identifier;
+
+<numeric> -> Integer
+          | Float
+          ;

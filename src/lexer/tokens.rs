@@ -1,5 +1,17 @@
-use logos::Logos;
+use logos::{Lexer, Logos};
 use std::fmt::Display;
+
+fn def_type(lex: &mut Lexer<Token>) -> Option<&'static str> {
+  let slice = lex.slice();
+  let slice = &slice[4..slice.len() - 1];
+  match slice {
+    "i32" => Some("i32"),
+    "i64" => Some("i64"),
+    "f32" => Some("f32"),
+    "f64" => Some("f64"),
+    _ => None,
+  }
+}
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 pub enum Token {
@@ -22,12 +34,33 @@ pub enum Token {
   Float,
 
   /// Operators
-  #[token("+")]
-  Plus,
+  /// Plus, minus, times, divide, modulo
+  #[regex(r"\+|-|\*|/|%")]
+  ArithmeticOp,
+
+  /// Cast (::)
+  #[regex(r"::")]
+  CastOp,
 
   /// Keywords
   #[regex("drop|dup")]
   Keyword,
+
+  /// Types
+  #[regex("i32|i64|f32|f64")]
+  Types,
+
+  /// Def Type (def(i32))
+  #[regex("def\\((i32|i64|f32|f64)\\)", def_type)]
+  DefType(&'static str),
+
+  /// Identifiers
+  #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*")]
+  Identifier,
+
+  /// End of input
+  #[regex(r"\$")]
+  End,
 }
 
 impl Display for Token {
@@ -38,4 +71,12 @@ impl Display for Token {
 
 pub fn span_to_tuple(span: logos::Span) -> (usize, usize) {
   (span.start, span.end - span.start)
+}
+
+impl Token {
+  /// Given any enum that carry a Data, get only the enum variant
+  /// Example: `DefType("i32")` -> `DefType`
+  pub fn get_token_type_only(&self) -> String {
+    self.to_string().split('(').next().unwrap().to_string()
+  }
 }
