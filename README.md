@@ -1,7 +1,7 @@
 # <h1 align="center"> Rusted Pile Compiler </h1>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Daniel-Boll/rusted-pile/main/assets/images/pile_logo.png" width=300>
+  <img src="https://user-images.githubusercontent.com/43689101/221320728-9b3332de-5225-4afe-8497-20402995d0b5.png" width=250>
 </p>
 
 <p align="center" >
