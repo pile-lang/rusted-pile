@@ -1,17 +1,17 @@
 use super::{parser::remove_angle_brackets, Grammar, Symbol};
 
 impl Grammar {
-  /// Expand the grammar by adding a new first production that leads to the
-  /// start symbol.
-  /// Example:
-  /// ```
-  /// S -> A | B
-  /// ```
-  /// becomes
-  /// ```
-  /// S' -> S
-  /// S -> A | B
-  /// ```
+  // Expand the grammar by adding a new first production that leads to the
+  // start symbol.
+  // Example:
+  // ```
+  // S -> A | B
+  // ```
+  // becomes
+  // ```
+  // S' -> S
+  // S -> A | B
+  // ```
   pub fn expand(&mut self) -> &mut Self {
     let start_symbol = self.productions[0].0.clone();
     let new_start_symbol = Symbol::NonTerminal(format!(

@@ -1,0 +1,7 @@
+---
+source: tests/semantic_spec.rs
+expression: "preemble(\"float_sum_should_work.pile\")"
+---
+Ok(
+    (),
+)

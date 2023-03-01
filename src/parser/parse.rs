@@ -3,7 +3,10 @@ use std::collections::VecDeque;
 
 use crate::{
   grammar::Symbol,
-  lexer::{tokens::{Token, span_to_tuple}, PileToken},
+  lexer::{
+    tokens::{span_to_tuple, Token},
+    PileToken,
+  },
   parser::{errors::ParseError, Action},
 };
 
@@ -36,8 +39,8 @@ impl SLR {
         }
         let PileToken {
           token: current_token,
-          slice,
           span,
+          ..
         } = next.clone().expect("No more tokens to parse");
 
         let symbol = if let Token::EndOfInput = current_token {
@@ -102,7 +105,6 @@ impl SLR {
             stack.push_back(StackItem::State(*state));
           }
           Action::Accept => {
-            println!("Accept");
             break;
           }
           Action::Error => {

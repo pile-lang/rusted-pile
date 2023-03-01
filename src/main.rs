@@ -1,5 +1,5 @@
 use miette::Result as MietteResult;
-use rusted_pile::{grammar, lexer, parser::SLR::SLR};
+use rusted_pile::{grammar, lexer, parser::SLR::SLR, semantic::SemanticAnalyzer};
 use std::fs;
 
 fn main() -> MietteResult<(), Box<dyn std::error::Error>> {
@@ -11,7 +11,8 @@ fn main() -> MietteResult<(), Box<dyn std::error::Error>> {
 
   glc.compute_follow_set().expand();
 
-  SLR::new(glc).parse(tokens, &lang_contents)?;
+  SLR::new(glc).parse(tokens.clone(), &lang_contents)?;
+  SemanticAnalyzer::new(&lang_contents).analyze(tokens)?;
 
   Ok(())
 }

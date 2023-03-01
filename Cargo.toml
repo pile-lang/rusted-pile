@@ -9,3 +9,5 @@ edition = "2021"
 logos = "0.12.1"
 miette = { version = "5.5.0", features = ["fancy"] }
 thiserror = "1.0.38"
+insta = { version = "1.28.0", features = ["yaml"] }
+serde = { version = "1.0.152", features = ["derive"] }

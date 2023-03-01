@@ -3,3 +3,4 @@
 pub mod lexer;
 pub mod grammar;
 pub mod parser;
+pub mod semantic;

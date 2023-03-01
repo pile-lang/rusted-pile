@@ -1,0 +1,14 @@
+---
+source: tests/semantic_spec.rs
+expression: "preemble(\"bool_sum_should_not_work.pile\")"
+---
+Err(
+    InvalidOperator {
+        input: "true false +\n",
+        advice: "The operation bool + bool is not valid",
+        extension_src: (
+            11,
+            1,
+        ),
+    },
+)

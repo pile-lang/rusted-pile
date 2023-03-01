@@ -17,7 +17,7 @@ pub fn compute_tokens(input: &str) -> MietteResult<Vec<PileToken>> {
         return Err(LexerError::UnsupportedFormat {
           input: input.to_string(),
           extension_src: span_to_tuple(lex.span()),
-          advice: "test".to_string(),
+          advice: "Lexer error".to_string(),
         })?;
       }
       _ => {

@@ -4,6 +4,7 @@
             | ComparisonOp
             | Identifier
             | <numeric>
+            | Boolean
             | <cast>
             | <var-declaration>
             | <if-statement>

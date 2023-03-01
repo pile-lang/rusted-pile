@@ -1,4 +1,5 @@
 use logos::{Lexer, Logos};
+use serde::Serialize;
 use std::fmt::Display;
 
 fn def_type(lex: &mut Lexer<Token>) -> Option<&'static str> {
@@ -9,29 +10,96 @@ fn def_type(lex: &mut Lexer<Token>) -> Option<&'static str> {
     "i64" => Some("i64"),
     "f32" => Some("f32"),
     "f64" => Some("f64"),
+    "bool" => Some("bool"),
     _ => None,
   }
 }
 
-#[derive(Logos, Debug, Clone, Copy, PartialEq)]
+fn _def_type_with_init(lex: &mut Lexer<Token>) -> Option<&'static str> {
+  let slice = lex.slice();
+  let slice = &slice[4..slice.len() - 1];
+  let slice = slice.split(',').collect::<Vec<&str>>();
+  match slice[0] {
+    "i32" => Some("i32"),
+    "i64" => Some("i64"),
+    "f32" => Some("f32"),
+    "f64" => Some("f64"),
+    "bool" => Some("bool"),
+    _ => None,
+  }
+}
+
+fn types(lex: &mut Lexer<Token>) -> Option<&'static str> {
+  let slice = lex.slice();
+  match slice {
+    "i32" => Some("i32"),
+    "i64" => Some("i64"),
+    "f32" => Some("f32"),
+    "f64" => Some("f64"),
+    "bool" => Some("bool"),
+    _ => None,
+  }
+}
+
+fn to_integer(lex: &mut Lexer<Token>) -> Option<i32> {
+  let slice = lex.slice();
+  if slice.starts_with("0x") {
+    i32::from_str_radix(&slice[2..], 16).ok()
+  } else if slice.starts_with("0b") {
+    i32::from_str_radix(&slice[2..], 2).ok()
+  } else if slice.starts_with("0o") {
+    i32::from_str_radix(&slice[2..], 8).ok()
+  } else {
+    slice.parse().ok()
+  }
+}
+
+fn to_float(lex: &mut Lexer<Token>) -> Option<f32> {
+  let slice = lex.slice();
+  slice.parse().ok()
+}
+
+fn to_boolean(lex: &mut Lexer<Token>) -> Option<bool> {
+  let slice = lex.slice();
+  match slice {
+    "true" => Some(true),
+    "false" => Some(false),
+    _ => None,
+  }
+}
+
+#[derive(Logos, Debug, Clone, Copy, PartialEq, Serialize)]
+#[logos(subpattern decimal = r"[0-9]+")]
+#[logos(subpattern hex = r"0[xX][0-9a-fA-F]+")]
+#[logos(subpattern binary = r"0b[0-1]+")]
+#[logos(subpattern octal = r"0o[0-7]+")]
+#[logos(subpattern full_float = r"[0-9]+\.[0-9]+")]
+#[logos(subpattern right_float = r"\.[0-9]+")]
+#[logos(subpattern left_float = r"[0-9]+\.")]
+#[logos(subpattern exponent_float = r"[0-9]+e[0-9]+")]
 pub enum Token {
   #[regex(r"[ \t\n\f]+", logos::skip)]
   #[error]
   Error,
 
   /// Integer literals
-  #[regex(r"[0-9]+")]
-  #[regex(r"0[xX][0-9a-fA-F]+")]
-  #[regex(r"0b[0-1]+")]
-  #[regex(r"0o[0-7]+")]
-  Integer,
+  #[regex(r"(?&decimal)", to_integer)]
+  #[regex(r"(?&hex)", to_integer)]
+  #[regex(r"(?&binary)", to_integer)]
+  #[regex(r"(?&octal)", to_integer)]
+  Integer(i32),
 
   /// Float literals
-  #[regex("[0-9]+\\.[0-9]+")]
-  #[regex("\\.[0-9]+")]
-  #[regex("[0-9]+\\.")]
-  #[regex(r"[0-9]+e[0-9]+")]
-  Float,
+  #[regex(r"(?&full_float)", to_float)]
+  #[regex(r"(?&right_float)", to_float)]
+  #[regex(r"(?&left_float)", to_float)]
+  #[regex(r"(?&exponent_float)", to_float)]
+  Float(f32),
+
+  /// Boolean literals
+  #[token("true", to_boolean)]
+  #[token("false", to_boolean)]
+  Boolean(bool),
 
   /// Operators
   /// Plus, minus, times, divide, modulo
@@ -75,11 +143,11 @@ pub enum Token {
   Range,
 
   /// Types
-  #[regex("i32|i64|f32|f64")]
-  Types,
+  #[regex("i32|i64|f32|f64|bool", types)]
+  Types(&'static str),
 
   /// Def Type (def(i32))
-  #[regex("def\\((i32|i64|f32|f64)\\)", def_type)]
+  #[regex("def\\((i32|i64|f32|f64|bool)\\)", def_type)]
   DefType(&'static str),
 
   /// Identifiers
