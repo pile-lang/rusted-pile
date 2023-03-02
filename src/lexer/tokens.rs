@@ -13,6 +13,27 @@ fn def_type(lex: &mut Lexer<Token>) -> Option<&'static str> {
   }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ArithmeticOperators {
+  Plus,
+  Minus,
+  Times,
+  Divide,
+  Modulo,
+}
+
+fn parse_arithmetic_op(lex: &mut Lexer<Token>) -> Option<ArithmeticOperators> {
+  let slice = lex.slice();
+  match slice {
+    "+" => Some(ArithmeticOperators::Plus),
+    "-" => Some(ArithmeticOperators::Minus),
+    "*" => Some(ArithmeticOperators::Times),
+    "/" => Some(ArithmeticOperators::Divide),
+    "%" => Some(ArithmeticOperators::Modulo),
+    _ => None,
+  }
+}
+
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 pub enum Token {
   #[regex(r"[ \t\n\f]+", logos::skip)]
@@ -20,11 +41,11 @@ pub enum Token {
   Error,
 
   /// Integer literals
-  #[regex(r"[0-9]+")]
-  #[regex(r"0[xX][0-9a-fA-F]+")]
-  #[regex(r"0b[0-1]+")]
-  #[regex(r"0o[0-7]+")]
-  Integer,
+  #[regex(r"[0-9]+", |lex| lex.slice().parse())]
+  #[regex(r"0[xX][0-9a-fA-F]+", |lex| i32::from_str_radix(&lex.slice()[2..], 16))]
+  #[regex(r"0b[0-1]+", |lex| i32::from_str_radix(&lex.slice()[2..], 2))]
+  #[regex(r"0o[0-7]+", |lex| i32::from_str_radix(&lex.slice()[2..], 8))]
+  Integer(i32),
 
   /// Float literals
   #[regex("[0-9]+\\.[0-9]+")]
@@ -35,8 +56,8 @@ pub enum Token {
 
   /// Operators
   /// Plus, minus, times, divide, modulo
-  #[regex(r"\+|-|\*|/|%")]
-  ArithmeticOp,
+  #[regex(r"\+|-|\*|/|%", parse_arithmetic_op)]
+  ArithmeticOp(ArithmeticOperators),
 
   /// Comparison operators
   #[regex(r"=|<>|<=|>=|<|>")]
