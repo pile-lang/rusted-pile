@@ -11,7 +11,10 @@ fn main() -> MietteResult<(), Box<dyn std::error::Error>> {
 
   glc.compute_follow_set().expand();
 
-  SLR::new(glc).parse(tokens, &lang_contents)?;
+  let abstract_syntax_tree = SLR::new(glc).parse(tokens, &lang_contents)?;
+  if let Some(abstract_syntax_tree) = abstract_syntax_tree {
+    println!("{}", abstract_syntax_tree);
+  }
 
   Ok(())
 }

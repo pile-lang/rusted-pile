@@ -62,7 +62,7 @@ fn node_children(node: &ParseTreeNode) -> Vec<&ParseTreeNode> {
 }
 
 impl SLR {
-  pub fn parse(&self, tokens: Vec<PileToken>, source_code: &str) -> MietteResult<()> {
+  pub fn parse(&self, tokens: Vec<PileToken>, source_code: &str) -> MietteResult<Option<AstNode>> {
     // A type to store either a usize or a Symbol
     #[derive(Debug, Clone)]
     enum StackItem {
@@ -175,11 +175,9 @@ impl SLR {
       }
     }
 
-    println!("{}", &parse_stack[0]);
     let ast = parse_ast(&parse_stack[0]);
-    println!("{}", &ast[0]);
 
-    Ok(())
+    Ok(Some(ast[0].clone()))
   }
 
   pub fn find_expected_symbol(&self, state: usize) -> Vec<String> {
@@ -204,9 +202,9 @@ impl SLR {
 
 // Binary ast node
 #[derive(Debug, Clone)]
-struct AstNode {
-  symbol: Symbol,
-  children: Vec<AstNode>,
+pub struct AstNode {
+  pub symbol: Symbol,
+  pub children: Vec<AstNode>,
 }
 
 impl Display for AstNode {
@@ -291,12 +289,10 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
 
   // If there is more than on element on the stack create a new node with the symbol Program
   // and the stack as children
-  if stack.len() > 1 {
-    stack = vec![AstNode {
-      symbol: Symbol::NonTerminal("Program".to_string()),
-      children: stack,
-    }];
-  }
+  stack = vec![AstNode {
+    symbol: Symbol::NonTerminal("R".to_string()),
+    children: stack,
+  }];
 
   stack
 }
