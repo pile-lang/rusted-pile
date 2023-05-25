@@ -10,3 +10,8 @@ logos = "0.12.1"
 miette = { version = "5.5.0", features = ["fancy"] }
 thiserror = "1.0.38"
 anyhow = "1.0.69"
+singleton-manager = "0.1.4"
+
+inkwell = { version = "0.2", features = ["llvm15-0"] }
+llvm-sys-150 = { package = "llvm-sys", version = "150.1.0", features = ["prefer-dynamic"] }
+lazy_static = "1.4"
