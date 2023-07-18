@@ -40,16 +40,30 @@ impl VMInterpreter {
 
 pub struct VM {
   stack: Vec<Value>,
+  instruction_counter: usize,
 }
 
 impl VM {
   /// Creates a new [`VM`].
   pub fn new() -> Self {
-    Self { stack: vec![] }
+    Self {
+      stack: vec![],
+      instruction_counter: 0,
+    }
   }
 
   pub fn execute(&mut self, bytecode: &[ByteCode]) -> anyhow::Result<()> {
-    for instruction in bytecode {
+    while self.instruction_counter < bytecode.len() {
+      let instruction = &bytecode[self.instruction_counter];
+
+      println!(
+        "{}{:?}",
+        format!(
+          "{: <24} | ",
+          format!("[{}] {:?}", self.instruction_counter, instruction)
+        ),
+        self.stack
+      );
       match instruction {
         // Stack
         ByteCode::PushInt(value) => PushInstruction::eval(&mut self.stack, *value)?,
@@ -80,7 +94,22 @@ impl VM {
         ByteCode::Geq => {
           ComparisonInstruction::eval(&mut self.stack, ComparisonMethod::GreaterThanEqual)?
         }
+
+        // Control flow
+        ByteCode::JumpIfNotTrue(new_counter) => {
+          if let Some(Value::Bool(value)) = self.stack.pop() {
+            if !value {
+              self.instruction_counter = *new_counter - 1;
+            }
+          }
+        }
+        ByteCode::Jump(new_counter) => {
+          self.instruction_counter = *new_counter - 1;
+        }
+        ByteCode::Ignore => {}
       }
+
+      self.instruction_counter += 1; // Increment the instruction counter after each instruction
     }
 
     Ok(())
