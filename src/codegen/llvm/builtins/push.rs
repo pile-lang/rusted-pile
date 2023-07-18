@@ -1,59 +1,78 @@
-use inkwell::values::IntValue;
+use crate::codegen::llvm::{compiler::Compiler, globals::stack::Stack};
 
-use crate::codegen::llvm::{
-  globals::stack::Stack, manager::LLVMManager, utils::get_params::FunctionParams,
-};
+use super::abort::AbortBuiltin;
 
-use super::abort::AbortBuiltinFunction;
+pub struct PushBuiltin;
 
-pub fn generate_push_function() {
-  let manager = LLVMManager::get();
-  let (context, module, builder) = manager.fetch_all();
+// TODO: Copy the arch-llvm push, it works fine
+impl PushBuiltin {
+  pub fn declare<'ctx>(compiler: &Compiler<'ctx>, stack: &'ctx Stack<'ctx>) {
+    let builder = compiler.builder();
+    let module = compiler.module();
 
-  let i32_type = context.i32_type();
-  let insert_type = context.void_type().fn_type(&[i32_type.into()], false);
-  let insert_func = module.add_function("push", insert_type, None);
-  let entry = context.append_basic_block(insert_func, "entry");
+    let i32_type = compiler.i32_type();
+    let insert_type = compiler.void_type().fn_type(&[i32_type.into()], false);
+    let insert_func = module.add_function("push", insert_type, None);
+    let entry = compiler.append_basic_block(insert_func, "entry");
 
-  {
-    builder.position_at_end(entry);
-
-    // Prelude. Get the value from the first parameter
-    let value = insert_func
-      .get_param::<IntValue>(0)
-      .expect("Expected a value in the first parameter of the push function");
-    let stack_manager = Stack::get();
-
-    // 1. Check if the stack is full
-    let stack_full_block = context.append_basic_block(insert_func, "stack_full");
-    let stack_not_full_block = context.append_basic_block(insert_func, "stack_not_full");
-    builder.build_conditional_branch(
-      stack_manager.is_full(),
-      stack_full_block,
-      stack_not_full_block,
-    );
-
-    // 2. If the stack is full
     {
-      builder.position_at_end(stack_full_block);
+      builder.position_at_end(entry);
 
-      AbortBuiltinFunction::call_from_values(
-        "[ABORT @ push]: stack is already full",
-        1,
-        Some("error_message_stack_full".to_string()),
-        None,
+      // 1. Check if the stack is full
+      let stack_full_block = compiler.append_basic_block(insert_func, "stack_full");
+      let stack_not_full_block = compiler.append_basic_block(insert_func, "stack_not_full");
+      builder.build_conditional_branch(
+        stack.is_full(compiler),
+        stack_full_block,
+        stack_not_full_block,
       );
 
-      builder.build_unreachable();
+      // 2. If the stack is full
+      {
+        builder.position_at_end(stack_full_block);
+
+        AbortBuiltin::call_from_values(
+          compiler,
+          "[ABORT @ push]: stack is already full\n",
+          1,
+          Some("error_message_stack_full".to_string()),
+          Some("error_stack_full".to_string()),
+        );
+
+        builder.build_unreachable();
+      }
+
+      // 3. If not then store the value
+      {
+        // Get the value from the first parameter
+        let value = insert_func.get_first_param().unwrap().into_int_value();
+
+        builder.position_at_end(stack_not_full_block);
+
+        stack.store(compiler, value);
+      }
+
+      builder.build_return(None);
     }
+  }
 
-    // 3. If not then store the value
-    {
-      builder.position_at_end(stack_not_full_block);
+  pub fn call_from_int(compiler: &Compiler<'_>, value: i32) {
+    let builder = compiler.builder();
 
-      stack_manager.store(value);
-    }
+    builder.build_call(
+      Self::get(compiler),
+      &[compiler.i32_type().const_int(value as u64, false).into()],
+      "push_int_call",
+    );
+  }
 
-    builder.build_return(None);
+  pub fn call(compiler: &Compiler<'_>, args: &[inkwell::values::BasicMetadataValueEnum]) {
+    compiler
+      .builder()
+      .build_call(Self::get(compiler), args, "printf_call");
+  }
+
+  pub fn get<'ctx>(compiler: &Compiler<'ctx>) -> inkwell::values::FunctionValue<'ctx> {
+    compiler.module().get_function("push").unwrap()
   }
 }

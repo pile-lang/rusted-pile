@@ -1,37 +1,49 @@
-use crate::codegen::llvm::manager::LLVMManager;
+use inkwell::values::FunctionValue;
+
+use crate::codegen::llvm::compiler::Compiler;
+
+pub const PRINTF_FUNCTION_NAME: &str = "printf";
 
 pub struct PrintfExtern;
 
 impl PrintfExtern {
-  pub fn declare() {
-    let manager = LLVMManager::get();
-    let module = manager.module();
-
-    let printf_type = manager
-      .i32_type()
-      .fn_type(&[manager.ptr_i32_type().into()], true);
-    module.add_function("printf", printf_type, None);
+  pub fn declare(compiler: &Compiler<'_>) {
+    compiler.module().add_function(
+      PRINTF_FUNCTION_NAME,
+      compiler
+        .i32_type()
+        .fn_type(&[compiler.ptr_i32_type().into()], true),
+      None,
+    );
   }
 
-  pub fn get() -> inkwell::values::FunctionValue<'static> {
-    let manager = LLVMManager::get();
-    let module = manager.module();
+  pub fn get<'ctx>(compiler: &Compiler<'ctx>) -> FunctionValue<'ctx> {
+    let module = compiler.module();
 
-    module.get_function("printf").unwrap_or_else(|| {
-      PrintfExtern::declare();
-      module
-        .get_function("printf")
-        .expect("printf function not found")
-    })
+    module
+      .get_function(PRINTF_FUNCTION_NAME)
+      .unwrap_or_else(|| {
+        Self::declare(compiler);
+        module
+          .get_function(PRINTF_FUNCTION_NAME)
+          .expect("abort function not found")
+      })
   }
 
-  pub fn call_from_str(message: &str) {}
+  pub fn call_from_str(compiler: &Compiler<'_>, message: &str) {
+    let builder = compiler.builder();
 
-  pub fn call(args: &[inkwell::values::BasicMetadataValueEnum]) {
-    let manager = LLVMManager::get();
+    let message_ptr = builder.build_global_string_ptr(message, "message");
+    builder.build_call(
+      PrintfExtern::get(compiler),
+      &[message_ptr.as_pointer_value().into()],
+      "printf_call_from_str",
+    );
+  }
 
-    manager
+  pub fn call(compiler: &Compiler<'_>, args: &[inkwell::values::BasicMetadataValueEnum]) {
+    compiler
       .builder()
-      .build_call(PrintfExtern::get(), args, "printf_call");
+      .build_call(PrintfExtern::get(compiler), args, "printf_call");
   }
 }

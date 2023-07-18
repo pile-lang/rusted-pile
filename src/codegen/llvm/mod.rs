@@ -1,40 +1,42 @@
-use std::{rc::Rc, sync::{Arc, Mutex}};
-
 use inkwell::context::Context;
 
 use crate::parser::parse::AstNode;
 
-use self::{globals::stack::Stack, manager::LLVMManager};
+use self::{
+  builtins::{abort::AbortBuiltin, pop::PopBuiltin, push::PushBuiltin},
+  compiler::Compiler,
+  externs::{exit::ExitExtern, printf::PrintfExtern},
+  globals::stack::Stack,
+};
 
 use super::CodeGenerator;
 
 pub mod builtins;
+pub mod compiler;
 pub mod externs;
+pub mod generate_code;
 pub mod globals;
-pub mod manager;
-pub mod operations;
-pub mod utils;
 
-pub struct LLVMCodeGenerator {}
-
-impl LLVMCodeGenerator {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
-
-impl Default for LLVMCodeGenerator {
-  fn default() -> Self {
-    Self::new()
-  }
-}
+#[derive(Default)]
+pub struct LLVMCodeGenerator;
 
 impl CodeGenerator for LLVMCodeGenerator {
-  fn generate(&self, ast: AstNode) -> anyhow::Result<()> {
-    let context = Arc::new(Mutex::new(Context::create()));
+  fn generate(&mut self, ast: AstNode) -> anyhow::Result<()> {
+    // This trick is to ensure that stack is dropped before context
+    let stack;
+    {
+      let context = Context::create();
+      let compiler = Compiler::new(&context, "main");
+      stack = Stack::new(64 * 1024, &compiler);
 
-    LLVMManager::create(context);
-    Stack::create(1024);
+      PrintfExtern::declare(&compiler);
+      ExitExtern::declare(&compiler);
+      AbortBuiltin::declare(&compiler);
+      PushBuiltin::declare(&compiler, &stack);
+      PopBuiltin::declare(&compiler, &stack);
+
+      generate_code::GenerateLLVMIR::generate(&compiler, &ast)?;
+    }
 
     Ok(())
   }
