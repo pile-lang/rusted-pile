@@ -153,7 +153,7 @@ impl SLR {
             stack.push_back(StackItem::State(*state));
           }
           Action::Accept => {
-            println!("Accept");
+            // println!("Accept");
             break;
           }
           Action::Error => {
@@ -205,44 +205,75 @@ impl SLR {
 pub struct AstNode {
   pub symbol: Symbol,
   pub children: Vec<AstNode>,
+  pub token: Token,
+}
+
+pub struct AstNodeIter<'a> {
+  nodes: Vec<&'a AstNode>,
+}
+
+pub struct AstNodeDetailedIter<'a> {
+  stack: Vec<(&'a AstNode, usize, bool)>, // (node, depth, is_last)
+}
+
+impl<'a> AstNode {
+  pub fn iter(&'a self) -> AstNodeIter<'a> {
+    AstNodeIter { nodes: vec![self] }
+  }
+
+  pub fn detailed_iter(&'a self) -> AstNodeDetailedIter<'a> {
+    AstNodeDetailedIter {
+      stack: vec![(self, 0, true)],
+    }
+  }
+}
+
+impl<'a> Iterator for AstNodeIter<'a> {
+  type Item = &'a AstNode;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let node = self.nodes.pop()?;
+    self.nodes.extend(node.children.iter().rev()); // reverse to maintain order due to stack nature of vec
+    Some(node)
+  }
+}
+
+impl<'a> Iterator for AstNodeDetailedIter<'a> {
+  type Item = (&'a AstNode, usize, bool);
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let (node, depth, is_last) = self.stack.pop()?;
+
+    for (i, child) in node.children.iter().enumerate().rev() {
+      let is_last = i == 0;
+      self.stack.push((child, depth + 1, is_last));
+    }
+
+    Some((node, depth, is_last))
+  }
 }
 
 impl Display for AstNode {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     writeln!(f, "AST")?;
-    write_ast_node(f, self, "", true)
+    for (node, depth, is_last) in self.detailed_iter() {
+      let prefix = if depth == 0 {
+        "".to_string()
+      } else {
+        format!(
+          "{}{}",
+          "  ".repeat(depth - 1),
+          if is_last {
+            "\x1B[33m└─\x1B[0m"
+          } else {
+            "\x1B[33m├─\x1B[0m"
+          }
+        )
+      };
+      writeln!(f, "{}{}", prefix, node.symbol)?;
+    }
+    Ok(())
   }
-}
-
-fn write_ast_node(
-  f: &mut fmt::Formatter,
-  node: &AstNode,
-  prefix: &str,
-  is_last: bool,
-) -> fmt::Result {
-  let (node_prefix, child_prefix) = if is_last {
-    ("\x1B[33m└─\x1B[0m", "  ")
-  } else {
-    ("\x1B[33m├─\x1B[0m", "\x1B[33m│ \x1B[0m")
-  };
-
-  writeln!(f, "{}{}{}", prefix, node_prefix, node.symbol)?;
-
-  let children = ast_node_children(node);
-  for (i, child) in children.iter().enumerate() {
-    write_ast_node(
-      f,
-      child,
-      &format!("{}{}", prefix, child_prefix),
-      i == children.len() - 1,
-    )?;
-  }
-
-  Ok(())
-}
-
-fn ast_node_children(node: &AstNode) -> Vec<&AstNode> {
-  node.children.iter().collect()
 }
 
 fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
@@ -262,10 +293,25 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
       }
     } else if let ParseTreeNode::Terminal(token) = current_node {
       match token {
+        Token::String(string) => {
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(string.to_string()),
+            children: Vec::new(),
+            token: token.clone(),
+          });
+        }
         Token::Integer(integer) => {
           stack.push(AstNode {
             symbol: Symbol::Terminal(integer.to_string()),
             children: Vec::new(),
+            token: token.clone(),
+          });
+        }
+        Token::Float(float) => {
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(float.to_string()),
+            children: Vec::new(),
+            token: token.clone(),
           });
         }
         Token::ArithmeticOp { .. } => {
@@ -274,6 +320,23 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
           stack.push(AstNode {
             symbol: Symbol::Terminal(token.to_string()),
             children: vec![left, right],
+            token: token.clone(),
+          });
+        }
+        Token::StackOps { .. } => {
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(token.to_string()),
+            children: Vec::new(),
+            token: token.clone(),
+          });
+        }
+        Token::ComparisonOp { .. } => {
+          let right = stack.pop().unwrap();
+          let left = stack.pop().unwrap();
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(token.to_string()),
+            children: vec![left, right],
+            token: token.clone(),
           });
         }
         _ => {}
@@ -292,6 +355,7 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
   stack = vec![AstNode {
     symbol: Symbol::NonTerminal("R".to_string()),
     children: stack,
+    token: Token::Program,
   }];
 
   stack
