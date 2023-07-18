@@ -1,0 +1,11 @@
+\ vim: ft=forth
+
+\ Arithmetic operations in Pile
+
+1 2   + dump \ => 3
+2 2   * dump \ => 4
+10 2  / dump \ => 2
+10 3  - dump \ => 7
+10 3  % dump \ => 1
+
+0 \ Return
