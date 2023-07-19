@@ -1,7 +1,7 @@
 use crate::parser::parse::AstNode;
 
 pub trait CodeGenerator {
-  fn generate(&mut self, ast: AstNode) -> anyhow::Result<()>;
+  fn generate(&mut self, ast: AstNode, filename: String) -> anyhow::Result<()>;
 }
 
 pub enum CodeGeneratorTarget {

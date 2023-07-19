@@ -191,13 +191,13 @@ impl VMCodeGenerator {
     }
   }
 
-  pub fn encode_byte_code(bytecode: Vec<ByteCode>) -> anyhow::Result<()> {
+  pub fn encode_byte_code(bytecode: Vec<ByteCode>, filename: String) -> anyhow::Result<()> {
     let encoded: Vec<u8> = bincode::serialize(&bytecode).unwrap();
 
     use std::io::Write;
 
-    let mut file =
-      File::create("bytecode.bin").map_err(|e| anyhow::anyhow!("Error creating file: {}", e))?;
+    let mut file = File::create(format!("{filename}.bin"))
+      .map_err(|e| anyhow::anyhow!("Error creating file: {}", e))?;
     file
       .write_all(&encoded)
       .map_err(|e| anyhow::anyhow!("Error writing to file: {}", e))?;
@@ -213,11 +213,11 @@ impl Default for VMCodeGenerator {
 }
 
 impl CodeGenerator for VMCodeGenerator {
-  fn generate(&mut self, ast: AstNode) -> anyhow::Result<()> {
+  fn generate(&mut self, ast: AstNode, filename: String) -> anyhow::Result<()> {
     let mut generator = VMCodeGenerator::new();
     let bytecode = generator.generate_byte_code(&ast)?;
     println!("{:?}", bytecode);
-    VMCodeGenerator::encode_byte_code(bytecode)?;
+    VMCodeGenerator::encode_byte_code(bytecode, filename)?;
 
     Ok(())
   }

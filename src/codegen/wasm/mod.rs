@@ -17,7 +17,7 @@ impl Default for WasmCodeGenerator {
 }
 
 impl CodeGenerator for WasmCodeGenerator {
-  fn generate(&mut self, _ast: AstNode) -> anyhow::Result<()> {
+  fn generate(&mut self, _ast: AstNode, _filename: String) -> anyhow::Result<()> {
     Ok(())
   }
 }
