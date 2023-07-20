@@ -83,7 +83,11 @@ impl SemanticAnalyzer {
           })?,
         }
       }
-      _ => panic!("Unsupported Validation!"),
+      _ => Err(SemanticError::Unimplemented {
+        input: self.source_code.clone(),
+        advice: "Semantic validation not implemented".to_string(),
+        extension_src: ast.span,
+      })?,
     }
 
     Ok(())

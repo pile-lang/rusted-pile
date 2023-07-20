@@ -8,6 +8,18 @@ pub enum SemanticError {
   StringError(#[from] std::io::Error),
 
   /// Stack Errors
+  #[error("Unimplemented")]
+  #[diagnostic(code(semantic_error::variable_type_mismatch))]
+  Unimplemented {
+    #[source_code]
+    input: String,
+
+    #[help]
+    advice: String,
+
+    #[label = "Here"]
+    extension_src: (usize, usize),
+  },
 
   #[error("Empty Stack")]
   #[diagnostic(code(semantic_error::empty_stack))]

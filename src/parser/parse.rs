@@ -175,7 +175,7 @@ impl SLR {
       }
     }
 
-    let ast = parse_ast(&parse_stack[0]);
+    let ast = parse_ast(&parse_stack[0])?;
 
     Ok(Some(ast[0].clone()))
   }
@@ -277,7 +277,7 @@ impl Display for AstNode {
   }
 }
 
-fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
+fn parse_ast(node: &ParseTreeNode) -> MietteResult<Vec<AstNode>> {
   // Iterate for each through the leaves of the tree, if the leave is a Integer push it to the
   // stack, if it is a operator pop the last two elements of the stack and create a new node
   // with the operator and the two elements as children. Append the new node to the stack.
@@ -347,7 +347,39 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
             span: *span,
           });
         }
-        _ => {}
+        Token::If => {
+          let condition = stack.pop().unwrap();
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(token.to_string()),
+            children: vec![condition],
+            token: token.clone(),
+            span: *span,
+          });
+        }
+        Token::Else => {
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(token.to_string()),
+            children: vec![],
+            token: token.clone(),
+            span: *span,
+          });
+        }
+        Token::End => {
+          stack.push(AstNode {
+            symbol: Symbol::Terminal(token.to_string()),
+            children: Vec::new(),
+            token: token.clone(),
+            span: *span,
+          });
+        }
+        // Given an error saying that the token is currently not done
+        _ => {
+          return Err(ParseError::UnexpectedToken {
+            input: token.to_string(),
+            extension_src: (0, token.to_string().len() - 1),
+            advice: "Token is currently not supported".to_string(),
+          })?;
+        }
       }
     }
 
@@ -367,5 +399,5 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
     span: (0, 0),
   }];
 
-  stack
+  Ok(stack)
 }

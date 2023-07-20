@@ -13,8 +13,9 @@ anyhow = "1.0.69"
 singleton-manager = "0.1.4"
 serde = { version = "1.0", features = ["derive"] }
 bincode = "1.3.3"
+clap = { version = "4.3.16", features = ["derive", "color"] }
 
-# inkwell = { version = "0.2", features = ["llvm15-0"] }
-# llvm-sys-150 = { package = "llvm-sys", version = "150.1.0", features = ["prefer-dynamic"] }
+inkwell = { version = "0.2", features = ["llvm15-0"] }
+llvm-sys-150 = { package = "llvm-sys", version = "150.1.0", features = ["prefer-dynamic"] }
 lazy_static = "1.4"
 once_cell = "1.17"

@@ -21,7 +21,7 @@ pub mod globals;
 pub struct LLVMCodeGenerator;
 
 impl CodeGenerator for LLVMCodeGenerator {
-  fn generate(&mut self, ast: AstNode) -> anyhow::Result<()> {
+  fn generate(&mut self, ast: AstNode, _filename: String) -> anyhow::Result<()> {
     // This trick is to ensure that stack is dropped before context
     let stack;
     {
