@@ -89,6 +89,15 @@ fn parse_to_string(lex: &mut Lexer<Token>) -> Option<String> {
   Some(slice.to_string())
 }
 
+fn to_boolean(lex: &mut Lexer<Token>) -> Option<bool> {
+  let slice = lex.slice();
+  match slice {
+    "true" => Some(true),
+    "false" => Some(false),
+    _ => None,
+  }
+}
+
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum Token {
   #[regex(r"[ \t\n\f]+", logos::skip)]
@@ -105,6 +114,11 @@ pub enum Token {
   /// Float literals
   #[regex(r"[+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?", |lex| lex.slice().parse(), priority = 1)]
   Float(f32),
+
+  /// Boolean literals
+  #[token("true", to_boolean)]
+  #[token("false", to_boolean)]
+  Boolean(bool),
 
   /// String literals
   #[regex(r#""([^"\\]|\\.)*""#, parse_to_string)]

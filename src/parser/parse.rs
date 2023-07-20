@@ -15,8 +15,8 @@ use super::SLR::SLR;
 
 #[derive(Debug)]
 pub enum ParseTreeNode {
-  Terminal(Token),
-  NonTerminal(Symbol, Vec<ParseTreeNode>),
+  Terminal(Token, (usize, usize)),
+  NonTerminal(Symbol, Vec<ParseTreeNode>, (usize, usize)),
 }
 
 impl fmt::Display for ParseTreeNode {
@@ -33,8 +33,8 @@ fn write_node(
   is_last: bool,
 ) -> fmt::Result {
   let symbol = match node {
-    ParseTreeNode::Terminal(token) => format!("\x1B[1m{}\x1B[0m", token),
-    ParseTreeNode::NonTerminal(symbol, _) => symbol.to_string(),
+    ParseTreeNode::Terminal(token, _) => format!("\x1B[1m{}\x1B[0m", token),
+    ParseTreeNode::NonTerminal(symbol, _, _) => symbol.to_string(),
   };
   let (node_prefix, child_prefix) = if is_last {
     ("\x1B[33m└─\x1B[0m", "  ")
@@ -43,8 +43,8 @@ fn write_node(
   };
   writeln!(f, "{}{}{}", prefix, node_prefix, symbol)?;
   let child_count = match node {
-    ParseTreeNode::Terminal(_) => 0,
-    ParseTreeNode::NonTerminal(_, children) => children.len(),
+    ParseTreeNode::Terminal(..) => 0,
+    ParseTreeNode::NonTerminal(_, children, _) => children.len(),
   };
   for (i, child) in node_children(node).iter().enumerate() {
     let child_prefix = format!("{}{}", prefix, child_prefix);
@@ -56,8 +56,8 @@ fn write_node(
 
 fn node_children(node: &ParseTreeNode) -> Vec<&ParseTreeNode> {
   match node {
-    ParseTreeNode::Terminal(_) => vec![],
-    ParseTreeNode::NonTerminal(_, children) => children.iter().collect(),
+    ParseTreeNode::Terminal(..) => vec![],
+    ParseTreeNode::NonTerminal(_, children, _) => children.iter().collect(),
   }
 }
 
@@ -110,7 +110,7 @@ impl SLR {
             } else {
               Symbol::Terminal(current_token.to_string())
             };
-            parse_stack.push(ParseTreeNode::Terminal(current_token));
+            parse_stack.push(ParseTreeNode::Terminal(current_token, span_to_tuple(span)));
             stack.push_back(StackItem::Symbol(symbol));
             stack.push_back(StackItem::State(*shift_state));
             next = input.next();
@@ -134,7 +134,7 @@ impl SLR {
 
             children.reverse();
 
-            let node = ParseTreeNode::NonTerminal(lhs.clone(), children);
+            let node = ParseTreeNode::NonTerminal(lhs.clone(), children, span_to_tuple(span));
             parse_stack.push(node);
 
             let top = if let StackItem::State(state) = stack.back().unwrap() {
@@ -206,6 +206,7 @@ pub struct AstNode {
   pub symbol: Symbol,
   pub children: Vec<AstNode>,
   pub token: Token,
+  pub span: (usize, usize),
 }
 
 pub struct AstNodeIter<'a> {
@@ -287,17 +288,18 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
   let mut traverse_stack: Vec<&ParseTreeNode> = Vec::new();
   let mut current_node = node;
   loop {
-    if let ParseTreeNode::NonTerminal(_, children) = current_node {
+    if let ParseTreeNode::NonTerminal(_, children, _) = current_node {
       for child in children.iter().rev() {
         traverse_stack.push(child);
       }
-    } else if let ParseTreeNode::Terminal(token) = current_node {
+    } else if let ParseTreeNode::Terminal(token, span) = current_node {
       match token {
         Token::String(string) => {
           stack.push(AstNode {
             symbol: Symbol::Terminal(string.to_string()),
             children: Vec::new(),
             token: token.clone(),
+            span: *span,
           });
         }
         Token::Integer(integer) => {
@@ -305,6 +307,7 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
             symbol: Symbol::Terminal(integer.to_string()),
             children: Vec::new(),
             token: token.clone(),
+            span: *span,
           });
         }
         Token::Float(float) => {
@@ -312,6 +315,7 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
             symbol: Symbol::Terminal(float.to_string()),
             children: Vec::new(),
             token: token.clone(),
+            span: *span,
           });
         }
         Token::ArithmeticOp { .. } => {
@@ -321,6 +325,7 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
             symbol: Symbol::Terminal(token.to_string()),
             children: vec![left, right],
             token: token.clone(),
+            span: *span,
           });
         }
         Token::StackOps { .. } => {
@@ -328,15 +333,18 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
             symbol: Symbol::Terminal(token.to_string()),
             children: Vec::new(),
             token: token.clone(),
+            span: *span,
           });
         }
         Token::ComparisonOp { .. } => {
           let right = stack.pop().unwrap();
           let left = stack.pop().unwrap();
+
           stack.push(AstNode {
             symbol: Symbol::Terminal(token.to_string()),
             children: vec![left, right],
             token: token.clone(),
+            span: *span,
           });
         }
         _ => {}
@@ -356,6 +364,7 @@ fn parse_ast(node: &ParseTreeNode) -> Vec<AstNode> {
     symbol: Symbol::NonTerminal("R".to_string()),
     children: stack,
     token: Token::Program,
+    span: (0, 0),
   }];
 
   stack

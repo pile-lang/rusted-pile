@@ -5,6 +5,7 @@ use rusted_pile::{
   interpreter::vm,
   lexer,
   parser::SLR::SLR,
+  semantic,
 };
 use std::fs;
 
@@ -15,7 +16,7 @@ fn generate() -> MietteResult<(), Box<dyn std::error::Error>> {
   let filename = &args[1];
 
   // Lexer
-  let lang_contents = fs::read_to_string(format!("assets/lang/{}.pile", filename))?;
+  let lang_contents = fs::read_to_string(filename)?;
   let tokens = lexer::generate::compute_tokens(&lang_contents)?;
 
   // Parser
@@ -27,6 +28,8 @@ fn generate() -> MietteResult<(), Box<dyn std::error::Error>> {
   let abstract_syntax_tree = SLR::new(glc)
     .parse(tokens, &lang_contents)?
     .ok_or("Failed to parse")?;
+
+  semantic::SemanticAnalyzer::new(lang_contents).analyze(&abstract_syntax_tree)?;
 
   // Codegen
   // println!("{}", abstract_syntax_tree);

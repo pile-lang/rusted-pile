@@ -5,19 +5,19 @@ pub trait CodeGenerator {
 }
 
 pub enum CodeGeneratorTarget {
-  LLVM,
+  // LLVM,
   Wasm,
   VirtualMachine,
 }
 
-pub mod llvm;
+// pub mod llvm;
 pub mod vm;
 pub mod wasm;
 
 // Choose the code generator based on the target
 pub fn code_generator(target: CodeGeneratorTarget) -> Box<dyn CodeGenerator> {
   match target {
-    CodeGeneratorTarget::LLVM => Box::<llvm::LLVMCodeGenerator>::default(),
+    // CodeGeneratorTarget::LLVM => Box::<llvm::LLVMCodeGenerator>::default(),
     CodeGeneratorTarget::Wasm => Box::<wasm::WasmCodeGenerator>::default(),
     CodeGeneratorTarget::VirtualMachine => Box::<vm::VMCodeGenerator>::default(),
   }
