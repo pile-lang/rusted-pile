@@ -1,1 +1,3 @@
 /target
+bytecode.bin
+*.lock

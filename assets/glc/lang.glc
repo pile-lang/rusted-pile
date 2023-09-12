@@ -3,6 +3,7 @@
 <statement> -> ArithmeticOp
             | ComparisonOp
             | Identifier
+            | String
             | <numeric>
             | <cast>
             | <var-declaration>

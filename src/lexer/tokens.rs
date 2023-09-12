@@ -1,46 +1,137 @@
 use logos::{Lexer, Logos};
 use std::fmt::Display;
 
-fn def_type(lex: &mut Lexer<Token>) -> Option<&'static str> {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+  I32,
+  I64,
+  F32,
+  F64,
+}
+
+fn def_type(lex: &mut Lexer<Token>) -> Option<Type> {
   let slice = lex.slice();
   let slice = &slice[4..slice.len() - 1];
   match slice {
-    "i32" => Some("i32"),
-    "i64" => Some("i64"),
-    "f32" => Some("f32"),
-    "f64" => Some("f64"),
+    "i32" => Some(Type::I32),
+    "i64" => Some(Type::I64),
+    "f32" => Some(Type::F32),
+    "f64" => Some(Type::F64),
     _ => None,
   }
 }
 
-#[derive(Logos, Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ArithmeticOperators {
+  Plus,
+  Minus,
+  Times,
+  Divide,
+  Modulo,
+}
+
+fn parse_arithmetic_op(lex: &mut Lexer<Token>) -> Option<ArithmeticOperators> {
+  let slice = lex.slice();
+  match slice {
+    "+" => Some(ArithmeticOperators::Plus),
+    "-" => Some(ArithmeticOperators::Minus),
+    "*" => Some(ArithmeticOperators::Times),
+    "/" => Some(ArithmeticOperators::Divide),
+    "%" => Some(ArithmeticOperators::Modulo),
+    _ => None,
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ComparisonOperators {
+  EqualTo,
+  NotEqualTo,
+  LessThan,
+  LessThanOrEqualTo,
+  GreaterThan,
+  GreaterThanOrEqualTo,
+}
+
+fn parse_comparison_op(lex: &mut Lexer<Token>) -> Option<ComparisonOperators> {
+  let slice = lex.slice();
+  match slice {
+    "=" => Some(ComparisonOperators::EqualTo),
+    "<>" => Some(ComparisonOperators::NotEqualTo),
+    "<" => Some(ComparisonOperators::LessThan),
+    "<=" => Some(ComparisonOperators::LessThanOrEqualTo),
+    ">" => Some(ComparisonOperators::GreaterThan),
+    ">=" => Some(ComparisonOperators::GreaterThanOrEqualTo),
+    _ => None,
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum StackOperators {
+  Drop,
+  Dup,
+  Dump,
+}
+
+fn parse_stack_op(lex: &mut Lexer<Token>) -> Option<StackOperators> {
+  let slice = lex.slice();
+  match slice {
+    "drop" => Some(StackOperators::Drop),
+    "dup" => Some(StackOperators::Dup),
+    "dump" => Some(StackOperators::Dump),
+    _ => None,
+  }
+}
+
+fn parse_to_string(lex: &mut Lexer<Token>) -> Option<String> {
+  let slice = lex.slice();
+  // remove the quotes
+  let slice = &slice[1..slice.len() - 1];
+  Some(slice.to_string())
+}
+
+fn to_boolean(lex: &mut Lexer<Token>) -> Option<bool> {
+  let slice = lex.slice();
+  match slice {
+    "true" => Some(true),
+    "false" => Some(false),
+    _ => None,
+  }
+}
+
+#[derive(Logos, Debug, Clone, PartialEq)]
 pub enum Token {
   #[regex(r"[ \t\n\f]+", logos::skip)]
   #[error]
   Error,
 
   /// Integer literals
-  #[regex(r"[0-9]+")]
-  #[regex(r"0[xX][0-9a-fA-F]+")]
-  #[regex(r"0b[0-1]+")]
-  #[regex(r"0o[0-7]+")]
-  Integer,
+  #[regex(r"[0-9]+", |lex| lex.slice().parse(), priority = 2)]
+  #[regex(r"0[xX][0-9a-fA-F]+", |lex| i32::from_str_radix(&lex.slice()[2..], 16))]
+  #[regex(r"0b[0-1]+", |lex| i32::from_str_radix(&lex.slice()[2..], 2))]
+  #[regex(r"0o[0-7]+", |lex| i32::from_str_radix(&lex.slice()[2..], 8))]
+  Integer(i32),
 
   /// Float literals
-  #[regex("[0-9]+\\.[0-9]+")]
-  #[regex("\\.[0-9]+")]
-  #[regex("[0-9]+\\.")]
-  #[regex(r"[0-9]+e[0-9]+")]
-  Float,
+  #[regex(r"[+-]?([0-9]*[.])?[0-9]+([eE][+-]?[0-9]+)?", |lex| lex.slice().parse(), priority = 1)]
+  Float(f32),
+
+  /// Boolean literals
+  #[token("true", to_boolean)]
+  #[token("false", to_boolean)]
+  Boolean(bool),
+
+  /// String literals
+  #[regex(r#""([^"\\]|\\.)*""#, parse_to_string)]
+  String(String),
 
   /// Operators
   /// Plus, minus, times, divide, modulo
-  #[regex(r"\+|-|\*|/|%")]
-  ArithmeticOp,
+  #[regex(r"\+|-|\*|/|%", parse_arithmetic_op)]
+  ArithmeticOp(ArithmeticOperators),
 
   /// Comparison operators
-  #[regex(r"=|<>|<=|>=|<|>")]
-  ComparisonOp,
+  #[regex(r"=|<>|<=|>=|<|>", parse_comparison_op)]
+  ComparisonOp(ComparisonOperators),
 
   /// Cast (::)
   #[regex(r"::")]
@@ -49,8 +140,8 @@ pub enum Token {
   /// Keywords
 
   /// Stack Ops
-  #[regex(r"drop|dup")]
-  StackOps,
+  #[regex(r"drop|dup|dump", parse_stack_op)]
+  StackOps(StackOperators),
 
   // @ sign
   #[token("@")]
@@ -80,7 +171,7 @@ pub enum Token {
 
   /// Def Type (def(i32))
   #[regex("def\\((i32|i64|f32|f64)\\)", def_type)]
-  DefType(&'static str),
+  DefType(Type),
 
   /// Identifiers
   #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*")]
@@ -89,6 +180,13 @@ pub enum Token {
   /// End of input
   #[regex(r"\$")]
   EndOfInput,
+
+  /// Comments (\)
+  #[regex(r"\\.*", logos::skip)]
+  Comment,
+
+  /// Decoy Program token
+  Program,
 }
 
 impl Display for Token {

@@ -1,24 +1,2 @@
-2::i32
-
-1 2 +
-def(i32) a
-1 @a
-1 2 +
-drop
-
-while 1 2 drop dup do 1 end
-
-1 2 = if
-  1
-end
-
-1 2 = if
-  1
-else
-  2
-end
-
-def(i32) a
-10 range a do 
-  a
-end
+1 2 + dump
+"oi" 2 + dump
